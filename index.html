@@ -451,35 +451,138 @@
   /* ==================== Калькулятор + синхронизация с формой ==================== */
   const RATE = 150;
   const MIN_ORDER = 15000;
-  const range = document.getElementById('areaRange');
-  const num = document.getElementById('areaInput');
-  const totalEl = document.getElementById('calcTotal');
-  const noteEl = document.getElementById('calcNote');
+
+  const range         = document.getElementById('areaRange');
+  const num           = document.getElementById('areaInput');
+  const totalEl       = document.getElementById('calcTotal');
+  const noteEl        = document.getElementById('calcNote');
   const formAreaInput = document.getElementById('formAreaInput');
   const fmt = n => n.toLocaleString('ru-RU');
 
-  function clampArea(v){ return Math.min(500, Math.max(50, Math.round(+v || 50))); }
+  function clampArea(v){
+    return Math.min(500, Math.max(50, Math.round(+v || 50)));
+  }
 
   function calc(area){
     area = clampArea(area);
-    const raw = area * RATE;
+    const raw   = area * RATE;
     const total = Math.max(raw, MIN_ORDER);
+
     totalEl.textContent = fmt(total) + ' ₽';
+
     if (raw < MIN_ORDER){
-      noteEl.textContent = 'Применён минимальный заказ — ' + fmt(MIN_ORDER) + ' ₽ (для площади до ' + (MIN_ORDER / RATE) + ' м²)';
+      noteEl.textContent = 'Применён минимальный заказ — ' + fmt(MIN_ORDER) +
+        ' ₽ (для площади до ' + (MIN_ORDER / RATE) + ' м²)';
       noteEl.classList.add('warn');
     } else {
       noteEl.textContent = fmt(area) + ' м² × ' + RATE + ' ₽/м² = ' + fmt(raw) + ' ₽';
       noteEl.classList.remove('warn');
     }
-    if (formAreaInput.value !== String(area)) formAreaInput.value = area;
+
+    // Синхронизация → в форму
+    if (formAreaInput.value !== String(area)) {
+      formAreaInput.value = area;
+    }
   }
 
-  range.addEventListener('input', () => { num.value = range.value; calc(+range.value); });
-  num.addEventListener('input', () => { let v = clampArea(num.value); range.value = v; calc(v); });
-  num.addEventListener('blur', () => { num.value = clampArea(num.value); range.value = num.value; calc(+num.value); });
-  formAreaInput.addEventListener('change', () => { const v = clampArea(formAreaInput.value); formAreaInput.value = v; num.value = v; range.value = v; calc(v); });
-  calc(+range.value);
+  range.addEventListener('input', () => {
+    num.value = range.value;
+    calc(+range.value);
+  });
+
+  num.addEventListener('input', () => {
+    const v = clampArea(num.value);
+    range.value = v;
+    calc(v);
+  });
+
+  num.addEventListener('blur', () => {
+    num.value = clampArea(num.value);
+    range.value = num.value;
+    calc(+num.value);
+  });
+
+  // Синхронизация: из формы → в калькулятор
+  formAreaInput.addEventListener('change', () => {
+    const v = clampArea(formAreaInput.value);
+    formAreaInput.value = v;
+    num.value = v;
+    range.value = v;
+    calc(v);
+  });
+
+  calc(+range.value); // первичный расчёт
+
+  /* ==================== Мобильное меню ==================== */
+  document.querySelectorAll('#menu a').forEach(link => {
+    link.addEventListener('click', () => {
+      document.getElementById('menu').classList.remove('open');
+    });
+  });
+
+  /* ==================== Отправка формы ====================
+     ⚠️ Замените e-mail ниже на свой.
+     После первой отправки придёт письмо-подтверждение — кликните ссылку в нём. */
+  const FORM_ENDPOINT = 'https://formsubmit.co/ajax/hello@example.ru';
+
+  const form      = document.getElementById('contactForm');
+  const statusEl  = document.getElementById('formStatus');
+  const submitBtn = form.querySelector('button[type=submit]');
+
+  function setStatus(text, type){
+    statusEl.textContent = text;
+    statusEl.className = 'form-status' + (type ? ' ' + type : '');
+  }
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    setStatus('', '');
+
+    const name  = form.name.value.trim();
+    const email = form.email.value.trim();
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+    if (!name){
+      setStatus('Пожалуйста, укажите имя.', 'error');
+      form.name.focus();
+      return;
+    }
+    if (!emailOk){
+      setStatus('Укажите корректный e-mail — на него придёт ответ.', 'error');
+      form.email.focus();
+      return;
+    }
+    if (!form.area.value){
+      setStatus('Укажите площадь дома.', 'error');
+      formAreaInput.focus();
+      return;
+    }
+
+    submitBtn.disabled = true;
+    const originalText = submitBtn.textContent;
+    submitBtn.textContent = 'Отправляем…';
+
+    try {
+      const data = new FormData(form);
+      const res = await fetch(FORM_ENDPOINT, {
+        method: 'POST',
+        body: data,
+        headers: { 'Accept': 'application/json' }
+      });
+
+      if (!res.ok) throw new Error('Request failed');
+
+      setStatus('Спасибо! Заявка отправлена — свяжемся с вами в течение рабочего дня.', 'success');
+      form.reset();
+      formAreaInput.value = num.value;
+    } catch (err) {
+      setStatus('Не удалось отправить. Позвоните: +7 (000) 000-00-00 или напишите на hello@example.ru', 'error');
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = originalText;
+    }
+  });
+</script>
 
   /* ==================== Мобильное меню ==================== */
   document.querySelectorAll('#menu a').forEach(link =>
