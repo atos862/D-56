@@ -445,7 +445,7 @@
     <div>© 2025 Эскизные проекты домов — от мечты до воплощения</div>
     <div>
       <a href="tel:+79697464545">+7 (969) 746-45-45</a> ·
-      <a href="mailto:info@d-56.ru">info@d-56.ru</a>
+      <a href="mailto:info@n-56.ru">info@n-56.ru</a>
     </div>
   </div>
 </footer>
@@ -524,9 +524,9 @@
   });
 
   /* ==================== Отправка формы ====================
-     ⚠️ Заявки уходят на info@d-56.ru.
+     ⚠️ Заявки уходят на info@n-56.ru.
      После первой отправки придёт письмо-подтверждение — кликните ссылку в нём. */
-  const FORM_ENDPOINT = 'https://formsubmit.co/ajax/info@d-56.ru';
+  const FORM_ENDPOINT = 'https://formsubmit.co/ajax/info@n-56.ru';
 
   const form      = document.getElementById('contactForm');
   const statusEl  = document.getElementById('formStatus');
@@ -579,7 +579,7 @@
       form.reset();
       formAreaInput.value = num.value;
     } catch (err) {
-      setStatus('Не удалось отправить. Позвоните: +7 (969) 746-45-45 или напишите на info@d-56.ru', 'error');
+      setStatus('Не удалось отправить. Позвоните: +7 (969) 746-45-45 или напишите на info@n-56.ru', 'error');
     } finally {
       submitBtn.disabled = false;
       submitBtn.textContent = originalText;
